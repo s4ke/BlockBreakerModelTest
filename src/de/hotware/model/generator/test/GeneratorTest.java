@@ -8,29 +8,96 @@ import de.hotware.blockbreaker.util.misc.Randomizer;
 
 public class GeneratorTest {
 	
-	public static void main(String args[]) {
-		int numberOfIterations;
-		System.out.println("How many Iterations?");
-		Scanner sc = new Scanner(System.in);
-		numberOfIterations = sc.nextInt();
-		int numberOfFailures = 0;
-		int numberOfPasses = 0;
-		long afterTime;
-		long preTime = System.nanoTime();
-		System.out.println("Starting Benchmark using BlockBreakerModel v0.1a...");
-		for(int i = 0; i < numberOfIterations; ++i) {
-			Randomizer.setSeed(213481238); //NOT chosen by fair dice roll.
-			Level level = LevelGenerator.createRandomLevel(16);
-			if(level.getReplacementList().size() == 0 || level.checkWin()) {
-				++numberOfFailures;
-			} else {
-				++numberOfPasses;
+	private int mCount;
+	private int mNumberOfIterations;
+	private int mNumberOfFailures;
+	private int mNumberOfPasses;
+	private IEndListener mEndListener;
+	
+	public GeneratorTest(int pCount, IEndListener pEndListener) {
+		this.mCount = pCount;
+		this.mEndListener = pEndListener;
+	}
+	
+	private synchronized void incrementNumberOfIterations() {
+		++this.mNumberOfIterations;
+		notifyAll();
+		if(this.mNumberOfIterations == this.mCount) {
+			this.mEndListener.onEnd(this.mNumberOfPasses, this.mNumberOfFailures);
+		}
+	}
+	
+	private synchronized void incrementNumberOfFailures() {
+		++this.mNumberOfFailures;
+		notifyAll();
+	}
+	
+	private synchronized void incrementNumberOfPasses() {
+		++this.mNumberOfPasses;
+		notifyAll();
+	}
+	
+	private synchronized int getNumberOfIterations() {
+		int ret = this.mNumberOfIterations;
+		notifyAll();
+		return ret;
+	}
+	
+	public void start(int pNumberOfThreads) {
+		for(int i = 0; i < pNumberOfThreads; ++i) {
+			new GeneratorThread().start();
+		}
+	}
+	
+	private class GeneratorThread extends Thread{
+		
+		public void run() {
+			while(GeneratorTest.this.getNumberOfIterations() < GeneratorTest.this.mCount) {
+				Level level = LevelGenerator.createRandomLevel(16);
+				if(level.getReplacementList().size() == 0 || level.checkWin()) {
+					GeneratorTest.this.incrementNumberOfFailures();
+				} else {
+					GeneratorTest.this.incrementNumberOfPasses();
+				}
+				GeneratorTest.this.incrementNumberOfIterations();
 			}
-		} 
-		afterTime = System.nanoTime();
-		System.out.println("Done.");
-		System.out.println("Number of Failures: " + numberOfFailures + "\nNumber of Passes: " + numberOfPasses);
-		System.out.println("The Benchmark took: " + (afterTime - preTime)/1000/1000/(double)1000 + "sec.");
+			System.out.println(this + " finished.");
+		}
+		
+	}
+	
+	private interface IEndListener {
+		public void onEnd(int pPasses, int pFailures);
+	}
+	
+	public static void main(String args[]) {
+		
+		Scanner sc = new Scanner(System.in);
+		
+		System.out.println("How many Iterations?");
+		int numberOfIterations = sc.nextInt();
+		
+		System.out.println("How many Threads?");
+		int numberOfThreads = sc.nextInt();
+		
+		Randomizer.setSeed(213481238); //NOT chosen by fair dice roll.
+		
+		final long preTime = System.nanoTime();
+		
+		GeneratorTest test = new GeneratorTest(numberOfIterations, new IEndListener() {
+
+				@Override
+				public void onEnd(int pPasses, int pFailures) {
+					long afterTime = System.nanoTime();
+					System.out.println("Done.");
+					System.out.println("The Benchmark took: " + (afterTime - preTime)/1000/1000/(double)1000 + "sec.");
+				}
+					
+			}
+		);
+		
+		System.out.println("Starting Benchmark using BlockBreakerModel v0.1a...");
+		test.start(numberOfThreads);		
 	}
 
 }
