@@ -4,6 +4,7 @@ import java.util.Scanner;
 
 import de.hotware.blockbreaker.model.Level;
 import de.hotware.blockbreaker.model.generator.LevelGenerator;
+import de.hotware.blockbreaker.util.misc.Randomizer;
 
 public class GeneratorTest {
 	
@@ -18,6 +19,7 @@ public class GeneratorTest {
 		long preTime = System.nanoTime();
 		System.out.println("Starting Benchmark using BlockBreakerModel v0.1a...");
 		for(int i = 0; i < numberOfIterations; ++i) {
+			Randomizer.setSeed(213481238); //NOT chosen by fair dice roll.
 			Level level = LevelGenerator.createRandomLevel(16);
 			if(level.getReplacementList().size() == 0 || level.checkWin()) {
 				++numberOfFailures;
