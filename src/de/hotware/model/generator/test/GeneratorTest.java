@@ -22,7 +22,7 @@ public class GeneratorTest {
 		afterTime = System.nanoTime();
 		System.out.println("Done.");
 		System.out.println("Number of Failures: " + numberOfFailures + "\nNumber of Passes: " + numberOfPasses);
-		System.out.println("The benchmark took: " + (afterTime - preTime)/1000/1000/(double)1000 + "sec.");
+		System.out.println("The Benchmark took: " + (afterTime - preTime)/1000/1000/(double)1000 + "sec.");
 	}
 
 }
