@@ -30,7 +30,7 @@ public class GeneratorTest {
 			ret = this.mCount;
 			this.mCount = 0;
 		}
-		notifyAll();
+		notify();
 		return ret;
 	}
 	
