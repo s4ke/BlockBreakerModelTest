@@ -21,7 +21,7 @@ public class GeneratorTest {
 		this.mEndListener = pEndListener;
 	}
 	
-	public synchronized int request() {
+	public  int request() {
 		int ret;
 		if(this.mCount > this.mRequestSize) {
 			this.mCount -= this.mRequestSize;
@@ -30,13 +30,12 @@ public class GeneratorTest {
 			ret = this.mCount;
 			this.mCount = 0;
 		}
-		notify();
 		return ret;
 	}
 	
 	public void init(int pNumberOfThreads) {
 		if(this.mCount > 20) {
-			this.mRequestSize = this.mCount / pNumberOfThreads / 10;
+			this.mRequestSize = this.mCount / pNumberOfThreads;
 		} else {
 			this.mRequestSize = 5;
 		}
@@ -75,7 +74,12 @@ public class GeneratorTest {
 			Level level;
 			while((this.mCount = request()) > 0) {
 				while(this.mCount-- > 0) {
-					level = LevelGenerator.createRandomLevel(16);
+					level = LevelGenerator.createRandomSolvedLevel();
+					if(!level.checkWin()) {
+						++this.mNumberOfFailures;
+						continue;
+					}
+					LevelGenerator.rearrangeLevel(level, 16);
 					if(level.getReplacementList().size() == 0 || level.checkWin()) {
 						++this.mNumberOfFailures;
 					}
